@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>2D Ball Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <script src="script.js"></script>
+</body>
+<style>
+    body {
+  margin: 0;
+  overflow: hidden;
+  background-color: #f0f0f0;
+}
+
+canvas {
+  display: block;
+  background-color: #ffffff;
+  margin: 0 auto;
+  border: 2px solid #000;
+}
+
+</style>
+<script>
+    const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let ball = {
+  x: canvas.width / 2,
+  y: canvas.height / 4,
+  radius: 30,
+  color: 'red',
+  vy: 5,
+  gravity: 0.8,
+  bounce: 0.85
+};
+
+function drawBall() {
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+  ctx.fillStyle = ball.color;
+  ctx.fill();
+  ctx.closePath();
+}
+
+function update() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ball.vy += ball.gravity;
+  ball.y += ball.vy;
+
+  if (ball.y + ball.radius > canvas.height) {
+    ball.y = canvas.height - ball.radius;
+    ball.vy *= -ball.bounce;
+  }
+
+  drawBall();
+  requestAnimationFrame(update);
+}
+
+// Touch/Click detection
+canvas.addEventListener('click', (e) => {
+  if (e.clientX < canvas.width / 2) {
+    ball.x -= 30;
+  } else {
+    ball.x += 30;
+  }
+
+  // Keep ball inside bounds
+  if (ball.x < ball.radius) ball.x = ball.radius;
+  if (ball.x > canvas.width - ball.radius) ball.x = canvas.width - ball.radius;
+});
+
+update();
+
+</script>
+</html>
