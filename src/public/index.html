@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bulk SMS Sender</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: system-ui, Arial, sans-serif; margin: 0; padding: 24px; }
+      .container { max-width: 900px; margin: 0 auto; }
+      h1 { margin: 0 0 12px; }
+      form { display: grid; gap: 12px; }
+      textarea, input, button, select { font: inherit; padding: 8px; }
+      textarea { min-height: 160px; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .actions { display: flex; gap: 12px; align-items: center; }
+      .result { white-space: pre-wrap; background: rgba(0,0,0,0.05); padding: 12px; border-radius: 6px; }
+      .help { color: #666; font-size: 0.9em; }
+      .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #eee; margin-right: 6px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Bulk SMS Sender</h1>
+      <p class="help">Paste phone numbers (E.164 like +14155551234) separated by commas, spaces, or new lines. Optionally set a default 2-letter country (e.g. US) for national formats.</p>
+      <form id="bulkForm">
+        <label>
+          Message
+          <input id="message" name="message" type="text" maxlength="1000" placeholder="Your message" required />
+        </label>
+        <label>
+          Phone numbers
+          <textarea id="numbersText" name="numbersText" placeholder="+14155551234, +442071838750 or one per line" required></textarea>
+        </label>
+        <div class="row">
+          <label>
+            Default country (optional, e.g. US)
+            <input id="defaultCountry" name="defaultCountry" type="text" maxlength="2" placeholder="US" />
+          </label>
+          <label>
+            Concurrency
+            <input id="concurrency" name="concurrency" type="number" min="1" max="50" value="5" />
+          </label>
+        </div>
+        <div class="actions">
+          <label><input type="checkbox" id="dryRun" /> Dry run (no SMS sent)</label>
+          <button type="submit">Send</button>
+          <span id="status"></span>
+        </div>
+      </form>
+
+      <h3>Result</h3>
+      <div id="result" class="result"></div>
+    </div>
+
+    <script>
+      const form = document.getElementById('bulkForm');
+      const resultEl = document.getElementById('result');
+      const statusEl = document.getElementById('status');
+
+      function setStatus(text) { statusEl.textContent = text; }
+      function show(obj) { resultEl.textContent = JSON.stringify(obj, null, 2); }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        setStatus('Submitting...');
+        const message = document.getElementById('message').value.trim();
+        const numbersText = document.getElementById('numbersText').value;
+        const defaultCountry = document.getElementById('defaultCountry').value.trim().toUpperCase();
+        const concurrency = Number(document.getElementById('concurrency').value) || undefined;
+        const dryRun = document.getElementById('dryRun').checked;
+
+        try {
+          const res = await fetch('/api/send-bulk', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message, numbers: numbersText, defaultCountry: defaultCountry || undefined, concurrency, dryRun })
+          });
+          const data = await res.json();
+          show(data);
+          setStatus(res.ok ? 'Done' : 'Error');
+        } catch (err) {
+          show({ error: String(err) });
+          setStatus('Network error');
+        }
+      });
+    </script>
+  </body>
+  </html>
+
